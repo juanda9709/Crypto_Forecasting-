@@ -1,0 +1,45 @@
+hyperparams:                      #Son como etapas del proceso
+  column-transformer: {}
+  regressor:                      #Modelo e hiperparámetros del modelo
+    n_estimators: 10
+    max_depth: null
+
+data:
+  filepath: train.csv  #indica donde están los datos
+  days: 10             #indica cuantos registros en días se van a tomar del dataset (iniciando desde el último día hacia atrás) 
+  test_size: 0.3       #indica el tamaño del test
+  crypto: 1            # INDICE ID CRIPTOS:
+                          #     0 -> Binance Coin       7 -> Ethereum Classic
+                          #     1 -> Bitcoin            8 -> IOTA
+                          #     2 -> Bitcoin Cash       9 -> Litecoin
+                          #     3 -> Cardano            10 -> Maker
+                          #     4 -> Dogecoin           11 -> Monero
+                          #     5 -> EOS.IO             12 -> Stellar
+                          #     6 -> Ethereum           13 -> TRON
+
+metrics:
+  - name: symmetric mean absolute percentage error    #indica la metrica y lo relacionado con ella
+    params: {}                                        # hiperparámetros de la métrica
+
+  - name: bias   
+    params: {}     
+
+  - name: mean absolute percentage error
+    params: {}
+
+  - name: pearson correlation coefficient
+    params: {}
+
+search:                       # Cuando se utiliza GridSearch para buscar hiperparámetros
+  jobs: -1
+  grid:
+    column-transformer: {}
+    regressor:
+      n_estimators: [50, 100, 200]
+      max_depth: [null, 10, 20, 30, 60]
+
+export:
+  output_dir: ./models          # Modelos que se implementaron  
+
+reports:
+  dir: ./reports                # Reportes con todo los del proceso de entrenamiento

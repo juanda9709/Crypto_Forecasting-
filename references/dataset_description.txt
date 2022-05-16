@@ -1,0 +1,29 @@
+
+Competition: https://www.kaggle.com/competitions/g-research-crypto-forecasting/data
+
+train.csv - The training set
+
+       timestamp - A timestamp for the minute covered by the row. (dtype = int)
+
+       Asset_ID - An ID code for the cryptoasset. (dtype = int)
+
+       Count - The number of trades that took place this minute. (dtype = float)
+
+       Open - The USD price at the beginning of the minute. (dtype = float)
+
+       High - The highest USD price during the minute. (dtype = float)
+
+       Low - The lowest USD price during the minute. (dtype = float)
+
+       Close - The USD price at the end of the minute. (dtype = float)
+
+       Volume - The number of cryptoasset units traded during the minute. (dtype = float)
+
+       VWAP - The volume weighted average price for the minute. (dtype = float)
+
+       Target - 15 minute residualized returns. (dtype = float)
+
+
+asset_details.csv - Provides the real name and of the cryptoasset for each Asset_ID and the weight each cryptoasset receives in the metric.
+
+supplemental_train.csv - After the submission period is over this file's data will be replaced with cryptoasset prices from the entire submission period. The current copy has been updated from the original and covers roughly 2/3 of the submission period.
