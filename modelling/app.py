@@ -13,6 +13,7 @@ import pandas as pd
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import TimeSeriesSplit
 
+
 import data
 import model
 import metrics
@@ -35,11 +36,12 @@ class CsvDatasetReader:
 
 @app.command()
 def train(config_file: str):
+    config_file = "config.yml"
     hyperparams = _load_config(config_file, "hyperparams")
     split = "train"
     X, y = _get_dataset(_load_config(config_file, "data"), splits=[split])[split]
     estimator = model.build_estimator(hyperparams)
-    estimator.fit(X, y)
+    estimator.fit(X, y)  
     output_dir = _load_config(config_file, "export")["output_dir"]
     version = _save_versioned_estimator(estimator, hyperparams, output_dir)
     return version
@@ -94,6 +96,8 @@ def find_hyperparams(
     )
     split = "train"
     X, y = _get_dataset(_load_config(config_file, "data"), splits=[split])[split]
+    
+    
     gs.fit(X, y)
     hyperparams = _param_grid_to_custom_format(gs.best_params_)
     estimator = gs.best_estimator_
@@ -163,4 +167,7 @@ def _save_yaml(content: t.Dict[str, t.Any], filepath: str):
 
 
 if __name__ == "__main__":
-    app()
+   # app(["train", "config_file"])
+    app(["eval", "config.yml", "2022-05-30_04_45_00+00_00"])
+   
+   # app()

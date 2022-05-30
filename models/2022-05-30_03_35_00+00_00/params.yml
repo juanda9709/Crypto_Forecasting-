@@ -1,0 +1,6 @@
+basic-scaler: {}
+regressor:
+  max_depth: null
+  n_estimators: 10
+tsextractFeatures: {}
+tsfresh-rolled-data: {}

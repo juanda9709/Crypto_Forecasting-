@@ -4,19 +4,8 @@ import typing_extensions as te
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
-
-#######################################################################
-from datetime import datetime
-import matplotlib.pyplot as plt
-import plotly.graph_objects as go
-import matplotlib.pyplot as plt
-import seaborn as sns
 from sklearn.model_selection import TimeSeriesSplit
-from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import cross_val_score
-#############################################################################
+
 
 class DatasetReader(te.Protocol):
     def __call__(self) -> pd.DataFrame:
@@ -51,6 +40,7 @@ def clean_dataset(df: pd.DataFrame, crypto: int) -> pd.DataFrame:
     cleaning_fn = _chain(
         [   _fill_NaN,
             _select_crypto,
+            _reindexar
                    
            # _fix_pool_quality,
            # _fix_misc_feature,
@@ -81,6 +71,9 @@ def _chain(functions: t.List[t.Callable[[pd.DataFrame], pd.DataFrame]], crypto: 
 def _fill_NaN(df, crypto):
     df = df.fillna(0)
     return df
+
+def _reindexar (df, cryto):
+    return df.reindex(range(df.index[0],df.index[-1]+60,60),method='pad')
 
 def _select_crypto(df, crypto):
 
