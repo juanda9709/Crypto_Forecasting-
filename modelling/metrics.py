@@ -1,5 +1,4 @@
 import numpy as np
-import sktime
 from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
 from sklearn.metrics import mean_absolute_percentage_error, mean_absolute_error, make_scorer
 from sklearn.metrics import r2_score

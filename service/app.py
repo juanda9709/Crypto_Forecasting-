@@ -17,6 +17,7 @@ app = FastAPI(title="API Crypto-Forecasting", version="0.0.1")
 
 class Settings(BaseSettings):
     serialized_model_path: str
+    serialized_prepro_path: str
     model_lib_dir: str
 
     class Config:
@@ -35,24 +36,11 @@ def load_estimator():
     estimator = joblib.load(get_settings().serialized_model_path)
     return estimator
 
-
-# @app.post("/")
-# async def make_prediction(input_: str = Body(...), estimator=Depends(load_estimator)):
-#     """
-#     Call this using something like
-
-#     YrSold=2010,YearBuilt=1970,YearRemodAdd=1999,GarageYrBlt=1980,LotArea=24,Neighborhood=Blmngtn,HouseStyle=SFoyer
-#     """
-#     input_dict = {}
-#     for var in input_.split(","):
-#         name, value = var.split("=")
-#         if value.isnumeric():
-
-#             value = int(value)
-#         input_dict[name] = [value]
-#     X = pd.DataFrame(input_dict)
-#     prediction = estimator.predict(X).tolist()
-#     return prediction
+@lru_cache(None)
+def load_prepro():
+    sys.path.append(get_settings().model_lib_dir)
+    estimator = joblib.load(get_settings().serialized_prepro_path)
+    return estimator
 
 
 # @app.post("/")
@@ -93,11 +81,14 @@ def get_logger():
 async def make_prediction(
     inputs: t.List[ModelInput] = Body(...),
     estimator=Depends(load_estimator),
+    preprocessing = Depends(load_prepro),
     logger=Depends(get_logger),
 ):
     logger.log(inputs)
     X = pd.DataFrame([row.dict() for row in inputs])
-    prediction = estimator.predict(X).tolist()
+    preprocessing_data = preprocessing.transform(X)
+    steps = preprocessing_data.shape[0]
+    prediction = estimator.predict(steps= steps, exog=preprocessing_data).tolist()
     return prediction
 
 

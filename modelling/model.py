@@ -2,18 +2,24 @@ from tarfile import ExtractError
 import typing as t
 import pandas as pd
 import numpy as np
+import skforecast
+import lightgbm as lgbm
+
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler
-from tsfresh.transformers import RelevantFeatureAugmenter
-from tsfresh import extract_features, extract_relevant_features, select_features
-from tsfresh.utilities.dataframe_functions import impute
-from tsfresh.feature_extraction import ComprehensiveFCParameters, MinimalFCParameters
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from tsfresh import extract_features,select_features
+from tsfresh.feature_extraction import ComprehensiveFCParameters, MinimalFCParameters, EfficientFCParameters
 from tsfresh.feature_extraction.settings import from_columns
 from tsfresh.utilities.dataframe_functions import roll_time_series
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.linear_model import SGDRegressor, Ridge
+from sklearn.svm import LinearSVR
 
+from skforecast.ForecasterAutoreg import ForecasterAutoreg
+from skforecast.model_selection import grid_search_forecaster
 
 
 def build_estimator(hyperparams: t.Dict[str, t.Any]):
@@ -23,19 +29,30 @@ def build_estimator(hyperparams: t.Dict[str, t.Any]):
         estimator = estimator_mapping[name](**params)
         steps.append((name, estimator))
     model = Pipeline(steps)
-    # if 'tsextractFeatures' in list(model.named_steps.keys()):
-    #     df_rolled_ = _df_rolled(X_)
-    #     model.set_params(tsextractFeatures__timeseries_container=df_rolled_)
     return model
+
+def build_estimator_(hyperparams: t.Dict[str, t.Any]):
+    estimator_mapping = get_estimator_mapping()
+    steps = []
+    for name, params in hyperparams.items():
+        estimator = estimator_mapping[name](**params)
+        steps.append((name, estimator))
+    model = Pipeline(steps)
+    forecaster = ForecasterAutoreg(regressor = model, lags = 3)
+    return forecaster
 
 def get_estimator_mapping():
     return {
-        "regressor": RandomForestRegressor,
+        "RandomForest": RandomForestRegressor,
+        "KnnRegressor": KNeighborsRegressor,
+        "LGBMRegressor": lgbm.LGBMRegressor,
+        "SGDRegressor": SGDRegressor,
+        "RidgeRegressor": Ridge,
+        "SVRRegressor": LinearSVR,        
         "tsfresh-rolled-data": TsRolledData,
-        "column-transformer": CustomColumnTransformer,
-        "simplified-transformer": SimplifiedTransformer,
         "tsextractFeatures": ExtractFeatures,
-        "basic-scaler": BasicScaler
+        "baseline-preprocessing": BasicTransformer,
+        "basic-scaler": BasicScaler        
     }
 
 class BasicScaler(BaseEstimator, TransformerMixin):
@@ -43,13 +60,17 @@ class BasicScaler(BaseEstimator, TransformerMixin):
         return self
     def transform(self, X):
         X_ = X.copy()
-        scaler = StandardScaler()
-        X_scaled = scaler.fit_transform(X_)
-        return X_scaled
+     #   scaler = MinMaxScaler()
+        ind = X_.index
+        scaler = StandardScaler(with_mean=False)
+        X_[list(X_.columns)] = scaler.fit_transform(X_)
+        final_df = pd.DataFrame(X_, index=ind)
+        final = final_df.reindex(range(final_df.index[0],final_df.index[-1]+60,60),method='pad')
+        return final
 
 
 
-class CustomColumnTransformer(BaseEstimator, TransformerMixin):
+class BasicTransformer(BaseEstimator, TransformerMixin):
     _float_columns = (
         "Count,Open,High,Low,Close,Volume,VWAP"
     ).split(",")
@@ -60,7 +81,7 @@ class CustomColumnTransformer(BaseEstimator, TransformerMixin):
         self._column_transformer = ColumnTransformer(
             transformers=[
                 ("droper", "drop", type(self)._ignored_columns),
-                ("scaler", StandardScaler(), type(self)._float_columns),
+                ("scaler", StandardScaler(with_mean=False), type(self)._float_columns),
             ],
             remainder="passthrough",
         )
@@ -77,10 +98,10 @@ class TsRolledData(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         return self
 
-    def transform(self, X):
-        X = X.copy()
-        X['timstamp'] = X.index
-        df_rolled = roll_time_series(X, column_id="Asset_ID", column_sort='timstamp', max_timeshift=15, min_timeshift=0)
+    def transform(self, X: pd.DataFrame):
+        X_ = X.copy()
+        X_['timstamp'] = X_.index
+        df_rolled = roll_time_series(X_, column_id="Asset_ID", column_sort='timstamp', max_timeshift=15, min_timeshift=0)
         df_rolled.drop(['Asset_ID'], axis = 1, inplace=True)
         df_rolled['id']=df_rolled.apply(lambda x: x['id'][1],axis=1)
 
@@ -94,8 +115,11 @@ class ExtractFeatures(BaseEstimator, TransformerMixin):
         _kind_to_fc_parameters = None
 
     def fit(self, X, y=None):
+        parameters = MinimalFCParameters()
+       # del parameters['friedrich_coefficients']
+       # del parameters['max_langevin_fixed_point']
         df_features = extract_features(X, column_id="id", column_sort="timstamp",
-                                default_fc_parameters=MinimalFCParameters()
+                                default_fc_parameters=parameters
                                  )
         X_filtered = select_features(df_features, y.to_numpy().flatten())
         self._kind_to_fc_parameters = from_columns(X_filtered)
@@ -107,50 +131,4 @@ class ExtractFeatures(BaseEstimator, TransformerMixin):
                                 )
         return df_final
 
-
-
-class SimplifiedTransformer(BaseEstimator, TransformerMixin):
-    """This is just for easy of demonstration"""
-
-    _columns_to_keep = "HouseAge,GarageAge,LotArea,Neighborhood,HouseStyle".split(",")
-
-    def __init__(self):
-        self._column_transformer = ColumnTransformer(
-            transformers=[
-                ("binarizer", OrdinalEncoder(), ["Neighborhood", "HouseStyle"]),
-            ],
-            remainder="drop",
-        )
-
-    def fit(self, X, y=None):
-        columns = type(self)._columns_to_keep
-        X_ = X[columns]
-        self._column_transformer = self._column_transformer.fit(X_, y=y)
-        return self
-
-    def transform(self, X):
-        columns = type(self)._columns_to_keep
-        X_ = X[columns]
-        X_ = self._column_transformer.transform(X_)
-        return X_
-
-        
-
-# class Reindexar(BaseEstimator, TransformerMixin):
-#     def fit(self, X, y=None):
-#         return self
-#     def transform(self, X):
-#         X = X.copy()
-#         return X.reindex(range(X.index[0],X.index[-1]+60,60),method='pad')
-
-# class TsRolledData(BaseEstimator, TransformerMixin):
-#     def fit(self, X, y=None):
-#         return self
-
-#     def transform(self, X):
-#         X__ = X.copy()
-#         X__['timstamp'] = X__.index
-#         X__ = X__.reset_index()
-#         ind = pd.DataFrame(index = X__.index)
-#         return ind
 

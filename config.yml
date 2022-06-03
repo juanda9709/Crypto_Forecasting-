@@ -1,15 +1,17 @@
 hyperparams:
-  tsfresh-rolled-data: {}                      #Son etapas del proceso
+  tsfresh-rolled-data: {}                      # Etapas del proceso
   tsextractFeatures: {}
   basic-scaler: {}
-  regressor:                      #Modelo e hiperparámetros del modelo
-    n_estimators: 10
+  #baseline-preprocessing: {}
+regressor:
+  RandomForest:                      #Modelo e hiperparámetros del modelo
+    n_estimators: 30
     max_depth: null
 
 data:
   filepath: train.csv  #indica donde están los datos
-  days: 5             #indica cuantos registros en días se van a tomar del dataset (iniciando desde el último día hacia atrás) 
-  test_size: 0.3       #indica el tamaño del test
+  days: 1             #indica cuantos registros en días se van a tomar del dataset (iniciando desde el último día hacia atrás) 
+  test_size: 0.2       #indica el tamaño del test
   crypto: 1            # INDICE ID CRIPTOS:
                           #     0 -> Binance Coin       7 -> Ethereum Classic
                           #     1 -> Bitcoin            8 -> IOTA
@@ -34,13 +36,19 @@ metrics:
 
 search:                       # Cuando se utiliza GridSearch para buscar hiperparámetros
   jobs: -1
-  grid:
+  preprocessing:
     tsfresh-rolled-data: {}
     tsextractFeatures: {}
     basic-scaler: {}
-    regressor:
+  regressor: 
+    RandomForest: {}
+  regressor_grid:
+    RandomForest:
       n_estimators: [50, 100, 200]
-      max_depth: [null, 10, 20, 30, 60]
+      max_depth: [null, 10, 20] 
+  forecaster_grid:
+    lags: [2,4,5]
+
 
 export:
   output_dir: ./models          # Modelos que se implementaron  
