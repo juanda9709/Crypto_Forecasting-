@@ -90,3 +90,6 @@ target/
 
 # Datasets
 *.csv
+
+#Modelos generados
+models/

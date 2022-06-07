@@ -1,12 +1,12 @@
 bias:
 - split: test
-  value: 26.983405005585514
+  value: 0.5153465866055187
 mean absolute percentage error:
 - split: test
-  value: 1519.3308771956645
+  value: 383.862959991335
 pearson correlation coefficient:
 - split: test
-  value: -0.0038365801700310474
+  value: 0.020681613436148907
 symmetric mean absolute percentage error:
 - split: test
-  value: 152.54757570799538
+  value: 149.3059202254377

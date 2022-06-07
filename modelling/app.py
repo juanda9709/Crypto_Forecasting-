@@ -1,4 +1,5 @@
 import os
+from pickle import FALSE
 import shutil
 import typing as t
 from collections import defaultdict
@@ -110,16 +111,11 @@ def find_hyperparams(
     scoring = metrics.get_scoring_function(metric["name"], **metric["params"])
     param_grid = search_config["regressor_grid"]
     lags_grid = search_config["forecaster_grid"]["lags"]
-
     estimator = model.build_estimator(dummy_preprocessing)
     forecaster = model.build_estimator_(regressor)
-
     split = "train"
     X, y = _get_dataset(_load_config(config_file, "data"), splits=[split])[split]
-
     preprocessing_data = estimator.fit_transform(X,y)
-      
-
     cv = TimeSeriesSplit(n_splits=5)
     gs = grid_search_forecaster(
         forecaster = forecaster,
@@ -127,16 +123,15 @@ def find_hyperparams(
         exog = preprocessing_data,
         param_grid= _param_grid_to_sklearn_format(param_grid),
         lags_grid= lags_grid,
-        steps=10,
+        steps=15,
         metric= MeanAbsolutePercentageError(symmetric=True),
         return_best=True,
+
         initial_train_size = int(y.shape[0] - y.shape[0]*0.1),         
     )
-    
     #_param_grid_to_sklearn_format(param_grid),
     #gs.fit(X, y)
     hyperparams = forecaster.regressor[0].get_params()
-
     output_dir = _load_config(config_file, "export")["output_dir"]
     _save_versioned_estimator(estimator, dummy_preprocessing , forecaster, hyperparams, output_dir)
 
@@ -177,9 +172,8 @@ def eval(
     for name, (X, y) in dataset.items():
         preprocessing_data = prepro.transform(X)
         pasos = X.shape[0]
-
-        
         y_pred = estimator.predict(steps=pasos, exog=preprocessing_data)
+
         for m in all_metrics:
             metric_name, params = m["name"], m["params"]
             fn = metrics.get_metric_function(metric_name, **params)
@@ -190,6 +184,7 @@ def eval(
         dict(report),
         os.path.join(reports_dir, f"{model_version}.yml"),
     )
+    
 
 
 def _load_config(filepath: str, key: str):
@@ -212,7 +207,6 @@ def _save_yaml(content: t.Dict[str, t.Any], filepath: str):
 
 if __name__ == "__main__":
     
-
    # app(["train", "config_file"])
    # app(["find-hyperparams", "config.yml"])
   #  app(["eval", "config.yml", "2022-06-02_05_26_00+00_00"])

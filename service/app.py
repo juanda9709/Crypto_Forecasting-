@@ -42,27 +42,6 @@ def load_prepro():
     estimator = joblib.load(get_settings().serialized_prepro_path)
     return estimator
 
-
-# @app.post("/")
-# async def make_prediction(
-#     inputs: t.List[ModelInput] = Body(...),
-#     estimator=Depends(load_estimator),
-# ):
-#     X = pd.DataFrame([row.dict() for row in inputs])
-#     prediction = estimator.predict(X).tolist()
-#     return prediction
-
-
-# @app.post("/", response_model=t.List[float])
-# async def make_prediction(
-#     inputs: t.List[ModelInput] = Body(...),
-#     estimator=Depends(load_estimator),
-# ):
-#     X = pd.DataFrame([row.dict() for row in inputs])
-#     prediction = estimator.predict(X).tolist()
-#     return prediction
-
-
 class Logger:
     def __init__(self, file: t.TextIO = sys.stdout):
         self.file = file

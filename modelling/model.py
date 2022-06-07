@@ -62,7 +62,7 @@ class BasicScaler(BaseEstimator, TransformerMixin):
         X_ = X.copy()
      #   scaler = MinMaxScaler()
         ind = X_.index
-        scaler = StandardScaler(with_mean=False)
+        scaler = StandardScaler()
         X_[list(X_.columns)] = scaler.fit_transform(X_)
         final_df = pd.DataFrame(X_, index=ind)
         final = final_df.reindex(range(final_df.index[0],final_df.index[-1]+60,60),method='pad')

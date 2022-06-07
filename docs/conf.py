@@ -164,7 +164,7 @@ html_static_path = ['_static']
 # html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'housepricedoc'
+htmlhelp_basename = 'cryptoforecastdoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -184,9 +184,9 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
     ('index',
-     'houseprice.tex',
-     u'houseprice Documentation',
-     u"Your name (or your organization/company/team)", 'manual'),
+     'crypto.tex',
+     u'CryptoForecast Documentation',
+     u"Juan David Garcia alvarez", 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -215,8 +215,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'houseprice', u'houseprice Documentation',
-     [u"Your name (or your organization/company/team)"], 1)
+    ('index', 'CryptoForecast', u'CryptoForecast Documentation',
+     [u"Juanda"], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -229,8 +229,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    ('index', 'houseprice', u'houseprice Documentation',
-     u"Your name (or your organization/company/team)", 'houseprice',
+    ('index', 'CryptoForecast', u'CryptoForecast Documentation',
+     u"Juanda", 'houseprice',
      'A short description of the project.', 'Miscellaneous'),
 ]
 
